@@ -19,4 +19,9 @@ def validate_story_input(data):
     if len(genre) > 50:
          return False, "Genre is too long (max 50 characters)."
     
+    language = data.get("language", "English").strip()
+    allowed_languages = ["English", "Hindi", "Spanish", "French"]
+    if language not in allowed_languages:
+        return False, f"Language must be one of: {', '.join(allowed_languages)}"
+
     return True, None
