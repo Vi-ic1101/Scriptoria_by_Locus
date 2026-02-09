@@ -105,7 +105,7 @@ def generate_content():
         "meta": results['meta']
     })
 
-@app.route('/download/<format_type>', methods=['POST'])
+@app.route('/download/<format_type>', methods=['GET'])
 def download_content(format_type):
     """
     Endpoint to download generated content in specific formats.

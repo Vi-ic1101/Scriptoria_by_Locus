@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scriptoria | AI Cinema</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --secondary: #9b59b6;
+            --bg-color: #f3e5f5;
+            --text-dark: #2c3e50;
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-dark);
+        }
+
+        .container {
+            width: 95vw;
+            height: 90vh;
+            max-width: 1200px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #fdfbfd 0%, #f4ecf7 100%);
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            overflow: hidden;
+        }
+
+        /* Sidebar / Input Area */
+        .sidebar {
+            padding: 30px;
+            background: #fafafa;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input,
+        select,
+        textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Output Area */
+        .output-area {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            /* Fix: Ensure content doesn't push parent size */
+            height: 100%;
+            /* Fix: Force height to match grid */
+        }
+
+        .tabs {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 0 20px;
+            flex-shrink: 0;
+            /* Fix: Don't shrink tabs */
+        }
+
+        .tab {
+            padding: 20px;
+            cursor: pointer;
+            color: #777;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: 0.3s;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .content-view {
+            flex: 1;
+            padding: 40px;
+            padding-bottom: 100px;
+            /* Extra padding for scrolling */
+            overflow-y: auto;
+            font-size: 1rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: #333;
+            font-family: 'Courier New', Courier, monospace;
+            /* Screenplay font */
+            background: #fff;
+            min-height: 0;
+            /* Fix: Flexbox scrolling quirk */
+        }
+
+        .content-view.script-font {
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .content-view.sans-font {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .placeholder-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Actions Bar */
+        .actions-bar {
+            padding: 15px 30px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            background: #fff;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Loader */
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffffaa;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                height: auto;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo">Scriptoria</div>
+        </header>
+
+        <main>
+            <!-- Inputs -->
+            <section class="sidebar">
+                <div class="form-group">
+                    <label>Internal Username</label>
+                    <input type="text" id="username" placeholder="Enter your name" onchange="setUsername()">
+                </div>
+
+                <div class="form-group">
+                    <label>Story Idea</label>
+                    <textarea id="story"
+                        placeholder="A detective discovers that the killer is a time traveler from the future..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Genre</label>
+                    <select id="genre">
+                        <option value="Drama">Drama</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Horror">Horror</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Approx. Scene Count</label>
+                    <select id="scene_count">
+                        <option value="3-5">Short (3-5 Scenes)</option>
+                        <option value="5-10">Medium (5-10 Scenes)</option>
+                    </select>
+                </div>
+
+                <button class="btn" id="generate-btn" onclick="generateContent()">
+                    <span id="btn-text">GENERATE SCRIPT</span>
+                </button>
+            </section>
+
+            <!-- Outputs -->
+            <section class="output-area">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('screenplay')">Screenplay</div>
+                    <div class="tab" onclick="switchTab('characters')">Characters</div>
+                    <div class="tab" onclick="switchTab('sound_design')">Sound Design</div>
+                </div>
+
+                <div id="content-view" class="content-view script-font">
+                    <div class="placeholder-state">
+                        <div class="placeholder-icon">🎬</div>
+                        <p>Your AI-generated script will appear here.<br>Enter a story idea to begin.</p>
+                    </div>
+                </div>
+
+                <div class="actions-bar">
+                    <button class="btn btn-outline" onclick="download('pdf')" disabled id="dl-pdf">Download PDF</button>
+                    <button class="btn btn-outline" onclick="download('docx')" disabled id="dl-docx">Download
+                        DOCX</button>
+                    <button class="btn btn-outline" onclick="download('txt')" disabled id="dl-txt">Download TXT</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // State
+        let currentData = {
+            screenplay: "",
+            characters: "",
+            sound_design: ""
+        };
+        let currentTab = 'screenplay';
+
+        async function setUsername() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                await fetch('/set-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+            }
+        }
+
+        async function generateContent() {
+            const story = document.getElementById('story').value.trim();
+            const genre = document.getElementById('genre').value;
+            const scene_count = document.getElementById('scene_count').value;
+            const btn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+
+            if (!story) return alert("Please enter a story idea.");
+
+            // UI Loading
+            btn.disabled = true;
+            btnText.textContent = "GENERATING...";
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = `<div class="loader"></div> GENERATING...`;
+
+            try {
+                const response = await fetch('/generate-content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ story, genre, scene_count })
+                });
+
+                if (!response.ok) throw new Error("Generation failed");
+
+                const data = await response.json();
+
+                // Store Data
+                currentData = data;
+
+                // Enable UI
+                document.getElementById('dl-pdf').disabled = false;
+                document.getElementById('dl-docx').disabled = false;
+                document.getElementById('dl-txt').disabled = false;
+
+                // Refresh View
+                renderContent();
+
+            } catch (error) {
+                console.error(error);
+                alert("Error generating content. Please ensure Ollama is running.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>GENERATE SCRIPT</span>`;
+            }
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            // UI Tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Font handling
+            const contentView = document.getElementById('content-view');
+            if (tabName === 'screenplay') {
+                contentView.classList.add('script-font');
+                contentView.classList.remove('sans-font');
+            } else {
+                contentView.classList.add('sans-font');
+                contentView.classList.remove('script-font');
+            }
+
+            renderContent();
+        }
+
+        function renderContent() {
+            const container = document.getElementById('content-view');
+            const content = currentData[currentTab];
+
+            if (!content) {
+                if (!currentData.screenplay) { // Initial state check
+                    // Keep placeholder
+                } else {
+                    container.innerHTML = "<p>No content for this section.</p>";
+                }
+                return;
+            }
+
+            container.innerText = content;
+        }
+
+        function download(format) {
+            window.location.href = `/download/${format}`;
+        }
+    </script>
+</body>
+
+</html>
