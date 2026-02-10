@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv() # Load environment variables from .env
 import secrets
 import uuid
 from datetime import datetime
