@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.env
+
+# Validations
+Server/ai/__pycache__/
+Server/utils/__pycache__/

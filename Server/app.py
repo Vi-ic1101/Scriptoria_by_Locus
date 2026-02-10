@@ -13,7 +13,8 @@ from utils.validators import validate_story_input
 from utils.response_cleaner import clean_ai_response
 from exports.pdf_export import generate_pdf
 from exports.docx_export import generate_docx
-from utils.ocr_handler import extract_text_from_image
+from utils.tts_handler import text_to_speech
+from ai.music_generator import generate_music
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -128,28 +129,77 @@ def view_shared_script(share_id):
 
     return render_template('share_view.html', script_content=entry['content'])
 
-@app.route('/upload-image', methods=['POST'])
-def upload_image():
-    """Extracts text from uploaded image."""
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided"}), 400
-    
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-    
-    try:
-        # Read file into memory
-        image_bytes = file.read()
-        text = extract_text_from_image(image_bytes)
-        
-        if not text:
-             return jsonify({"error": "Could not extract text from image."}), 422
+@app.route('/narrate', methods=['POST'])
+def narrate_content():
+    """Generates audio from screenplay/synopsis."""
+    if 'generated_content' not in session:
+        return jsonify({"error": "No content to narrate"}), 404
 
-        return jsonify({"extracted_text": text})
+    data = request.json
+    narrate_type = data.get('type', 'screenplay') # 'screenplay' or 'synopsis'
+    
+    content = session['generated_content']
+    text_to_read = ""
+    
+    if narrate_type == 'synopsis':
+        text_to_read = content.get('synopsis', '')
+    else:
+        text_to_read = content.get('screenplay', '')
+
+    if not text_to_read:
+        return jsonify({"error": "No text found for selected type"}), 404
+
+    # Remove strict formatting for better speech?
+    # For now, read as is.
+    
+    output_dir = os.path.join(app.root_path, 'temp_audio')
+    try:
+        audio_path = text_to_speech(text_to_read, output_dir)
+        if not audio_path:
+             return jsonify({"error": "TTS failed"}), 500
+        
+        filename = os.path.basename(audio_path)
+        return jsonify({"audio_url": f"/audio/{filename}"})
     except Exception as e:
-        logger.error(f"OCR failed: {e}")
+        logger.error(f"Narration error: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/audio/<filename>')
+def serve_audio(filename):
+    """
+    Serves generated audio files.
+    """
+    audio_dir = os.path.join(app.root_path, 'temp_audio')
+    return send_from_directory(audio_dir, filename)
+
+@app.route('/generate-music', methods=['POST'])
+def generate_music_route():
+    """Generates music from description."""
+    data = request.json
+    description = data.get('description', '')
+    
+    if not description:
+        return jsonify({"error": "No description provided"}), 400
+
+    output_dir = os.path.join(app.root_path, 'temp_music')
+    try:
+        music_path = generate_music(description, duration=10, output_dir=output_dir)
+        if not music_path:
+             return jsonify({"error": "Music generation failed"}), 500
+        
+        filename = os.path.basename(music_path)
+        return jsonify({"audio_url": f"/music/{filename}"})
+    except Exception as e:
+        logger.error(f"Music Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/music/<filename>')
+def serve_music(filename):
+    """
+    Serves generated music files.
+    """
+    music_dir = os.path.join(app.root_path, 'temp_music')
+    return send_from_directory(music_dir, filename)
 
 @app.route('/download/<format_type>', methods=['GET'])
 def download_content(format_type):
