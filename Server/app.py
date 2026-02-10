@@ -62,61 +62,131 @@ def set_username():
     session['username'] = username
     return jsonify({"message": "Username set successfully"})
 
+import threading
+import time
+
+# ... imports ...
+
+# In-Memory Storage
+SHARED_SCRIPTS = {}
+JOBS = {}  # {job_id: {'status': 'pending'|'processing'|'completed'|'failed', 'results': ..., 'step': 'Starting...'}}
+
+# ... config ...
+
+def process_generation_job(job_id, data):
+    """Background task to run AI generation."""
+    logger.info(f"Starting job {job_id}")
+    JOBS[job_id]['status'] = 'processing'
+    JOBS[job_id]['step'] = 'Initializing AI Models...'
+    
+    story = data.get('story')
+    genre = data.get('genre', 'Drama')
+    scene_count = data.get('scene_count', '3-5')
+    language = data.get('language', 'English')
+    
+    try:
+        # We can update 'step' inside generate_story_content if we passed a callback, 
+        # but for now we'll just let it run.
+        # Ideally, breaking generate_story_content into steps would allow finer progress updates.
+        
+        # Simulating steps for the user if we can't hook into the deep function easily yet,
+        # or we rely on the frontend cycling text. 
+        # But let's try to update step if possible or just stick to 'processing'.
+        
+        results = generate_story_content(story, genre, scene_count, language)
+        
+        if results['meta']['status'] not in ['success', 'partial_success']:
+             JOBS[job_id]['status'] = 'failed'
+             JOBS[job_id]['error'] = "AI Model returned failure status."
+             return
+
+        # Clean Output
+        cleaned_screenplay = clean_ai_response(results['screenplay'])
+        cleaned_characters = clean_ai_response(results['characters'])
+        cleaned_sound = clean_ai_response(results['sound_design'])
+        cleaned_synopsis = clean_ai_response(results.get('synopsis', ''))
+
+        content_data = {
+            "screenplay": cleaned_screenplay,
+            "characters": cleaned_characters,
+            "sound_design": cleaned_sound,
+            "synopsis": cleaned_synopsis,
+            "meta": results['meta']
+        }
+        
+        # Store Result
+        JOBS[job_id]['results'] = content_data
+        JOBS[job_id]['status'] = 'completed'
+        logger.info(f"Job {job_id} completed successfully.")
+        
+    except Exception as e:
+        logger.error(f"Job {job_id} failed: {e}")
+        JOBS[job_id]['status'] = 'failed'
+        JOBS[job_id]['error'] = str(e)
+
 @app.route('/generate-content', methods=['POST'])
 def generate_content():
-    """Main endpoint to generate Screenplay, Characters, and Sound Design."""
+    """Initiates async generation."""
     data = request.json
     is_valid, error = validate_story_input(data)
     if not is_valid:
         return jsonify({"error": error}), 400
 
-    story = data.get('story')
-    genre = data.get('genre', 'Drama')
-    scene_count = data.get('scene_count', '3-5')
-    language = data.get('language', 'English')
-
-    try:
-        results = generate_story_content(story, genre, scene_count, language)
-    except Exception as e:
-        logger.error(f"Generation failed: {e}")
-        return jsonify({"error": "Internal AI generation error"}), 500
-
-    if results['meta']['status'] not in ['success', 'partial_success']:
-         return jsonify({"error": "Failed to generate content from AI model."}), 500
-
-    # Clean Output
-    cleaned_screenplay = clean_ai_response(results['screenplay'])
-    cleaned_characters = clean_ai_response(results['characters'])
-    cleaned_sound = clean_ai_response(results['sound_design'])
-    cleaned_synopsis = clean_ai_response(results.get('synopsis', ''))
-
-    # Store in Session
-    content_data = {
-        "screenplay": cleaned_screenplay,
-        "characters": cleaned_characters,
-        "sound_design": cleaned_sound,
-        "synopsis": cleaned_synopsis,
-        "meta": results['meta']
+    job_id = str(uuid.uuid4())
+    JOBS[job_id] = {
+        'status': 'pending',
+        'created_at': datetime.now(),
+        'step': 'Queued'
     }
-    session['generated_content'] = content_data
     
-    # Store in Shared Memory (Lazy cleanup)
-    share_id = str(uuid.uuid4())
-    SHARED_SCRIPTS[share_id] = {
-        "content": content_data,
-        "created_at": datetime.now()
+    # Spawn Thread
+    thread = threading.Thread(target=process_generation_job, args=(job_id, data))
+    thread.daemon = True # Daemon threads exit when app exits
+    thread.start()
+
+    return jsonify({"job_id": job_id, "status": "pending"})
+
+@app.route('/generation-status/<job_id>', methods=['GET'])
+def get_generation_status(job_id):
+    """Check status of a job."""
+    job = JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    
+    response = {
+        "status": job['status'],
+        "step": job.get('step', 'Processing...')
     }
+    
+    if job['status'] == 'completed':
+        # Result is ready, client should fetch it or we send it here?
+        # Sending it here is easier for now to avoid another call, 
+        # but standard pattern often is status -> then fetch result.
+        # Let's send result here to keep it simple for the frontend transition.
+        
+        # Also save to session to maintain compatibility with other endpoints (narrate/download)
+        session['generated_content'] = job['results']
+        
+        # Also Shared memory logic
+        share_id = str(uuid.uuid4())
+        SHARED_SCRIPTS[share_id] = {
+            "content": job['results'],
+            "created_at": datetime.now()
+        }
+        
+        response['data'] = job['results']
+        response['share_id'] = share_id
+        
+        # Auto-cleanup job to save memory? 
+        # Maybe keep it for a bit in case of retries, but session is set now.
+        del JOBS[job_id] 
+        
+    elif job['status'] == 'failed':
+        response['error'] = job.get('error', 'Unknown error')
+        del JOBS[job_id]
+        
+    return jsonify(response)
 
-    # Lazy Cleanup (remove entries older than 30 mins)
-    now = datetime.now()
-    expired_keys = [k for k, v in SHARED_SCRIPTS.items() if (now - v['created_at']) > timedelta(minutes=30)]
-    for k in expired_keys:
-        del SHARED_SCRIPTS[k]
-
-    return jsonify({
-        **content_data,
-        "share_id": share_id
-    })
 
 @app.route('/share/<share_id>')
 def view_shared_script(share_id):
@@ -217,19 +287,19 @@ def download_content(format_type):
         buffer = BytesIO()
         buffer.write(full_text.encode('utf-8'))
         buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name="scriptoria_export.txt", mimetype="text/plain")
+        return send_file(buffer, as_attachment=True, download_name="draftroom_export.txt", mimetype="text/plain")
 
     elif format_type == 'pdf':
         try:
             pdf_buffer = generate_pdf(content)
-            return send_file(pdf_buffer, as_attachment=True, download_name="scriptoria_export.pdf", mimetype="application/pdf")
+            return send_file(pdf_buffer, as_attachment=True, download_name="draftroom_export.pdf", mimetype="application/pdf")
         except Exception as e:
             return jsonify({"error": "PDF generation failed"}), 500
 
     elif format_type == 'docx':
         try:
             docx_buffer = generate_docx(content)
-            return send_file(docx_buffer, as_attachment=True, download_name="scriptoria_export.docx", mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            return send_file(docx_buffer, as_attachment=True, download_name="draftroom_export.docx", mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         except Exception as e:
             return jsonify({"error": "DOCX generation failed"}), 500
 

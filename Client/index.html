@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scriptoria | The Filmmaker's Studio</title>
+    <title>DraftRoom | The Filmmaker's Studio</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,13 +19,25 @@
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
 
+    <!-- PRELOADER / GENERATION OVERLAY -->
+    <div id="loading-overlay" class="hidden">
+        <div class="loading-content">
+            <h2 id="loading-status">INITIALIZING STUDIO...</h2>
+            <div class="loading-bar-container">
+                <div id="loading-bar"></div>
+            </div>
+            <p id="loading-quote">"Everything begins with an idea."</p>
+        </div>
+    </div>
+
     <!-- MAIN APP CONTAINER -->
     <div id="app-container">
 
         <!-- VIEW 1: THE MARQUEE (Welcome) -->
         <section id="view-welcome" class="view active">
+            <div class="spotlight"></div>
             <div class="marquee-content">
-                <h1 class="title-main">SCRIPTORIA</h1>
+                <h1 class="title-main">DRAFTROOM</h1>
                 <p class="subtitle">Where Algorithms Meet Artistry</p>
                 <button class="btn-primary huge" onclick="navigateTo('view-input')">ENTER STUDIO</button>
             </div>
@@ -34,7 +46,7 @@
         <!-- VIEW 2: THE WRITERS' ROOM (Input) -->
         <section id="view-input" class="view">
             <header class="app-header">
-                <div class="logo-small" onclick="navigateTo('view-welcome')">SCRIPTORIA</div>
+                <div class="logo-small" onclick="navigateTo('view-welcome')">DRAFTROOM</div>
                 <div class="step-indicator">PHASE 1: CONCEPTUALIZATION</div>
             </header>
 
@@ -71,6 +83,7 @@
                             <option value="Spanish">Spanish</option>
                             <option value="French">French</option>
                             <option value="Japanese">Japanese</option>
+                            <option value="Hindi">Hindi</option>
                         </select>
                     </div>
                 </aside>
@@ -94,7 +107,7 @@
         <!-- VIEW 3: THE SCREENING (Output) -->
         <section id="view-output" class="view">
             <header class="app-header">
-                <div class="logo-small" onclick="navigateTo('view-welcome')">SCRIPTORIA</div>
+                <div class="logo-small" onclick="navigateTo('view-welcome')">DRAFTROOM</div>
                 <div class="step-indicator">PHASE 2: PRODUCTION</div>
                 <button class="btn-secondary" onclick="navigateTo('view-input')">NEW DRAFT</button>
             </header>
@@ -110,7 +123,7 @@
                 <!-- Right: Asset Dock -->
                 <aside class="asset-dock">
                     <div class="tabs">
-                        <button class="tab-btn active" onclick="switchTab('screenplay')">SCRIPT</button>
+                        <button class="tab-btn active" onclick="switchTab('screenplay')">Synopsis</button>
                         <button class="tab-btn" onclick="switchTab('characters')">CAST</button>
                         <button class="tab-btn" onclick="switchTab('sound')">SOUND</button>
                     </div>
@@ -130,7 +143,9 @@
                         <div class="download-group">
                             <button class="btn-tool small" onclick="download('pdf')">📄 PDF</button>
                             <button class="btn-tool small" onclick="download('docx')">📝 DOCX</button>
+                            <button class="btn-tool small" onclick="generateShareLink()">🔗 LINK</button>
                         </div>
+                        <div id="media-player-container"></div>
                         <div id="media-player-container"></div>
                     </div>
                 </aside>

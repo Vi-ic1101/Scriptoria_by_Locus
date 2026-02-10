@@ -1,6 +1,6 @@
-# Scriptoria_by_Locus Backend
+# DraftRoom Backend
 
-The backend for Scriptoria_by_Locus, an AI-powered screenplay generator.
+The backend for DraftRoom, an AI-powered screenplay generator.
 
 ## Setup
 

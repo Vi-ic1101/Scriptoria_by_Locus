@@ -26,7 +26,7 @@ def query_ollama(prompt):
 
     try:
         logger.info(f"Sending request to Ollama ({MODEL_NAME})...")
-        response = requests.post(OLLAMA_URL, json=payload, timeout=120)
+        response = requests.post(OLLAMA_URL, json=payload, timeout=600)
         response.raise_for_status()
         
         data = response.json()
