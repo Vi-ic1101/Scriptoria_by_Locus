@@ -1,223 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scriptoria | AI Cinema</title>
-    <style>
-        :root {
-            --purple-main: #8e44ad;
-            --purple-light: #d1c4d1;
-            --glass: rgba(255, 255, 255, 0.95);
-            --text-dark: #2c3e50;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--purple-light);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .app-container {
-            width: 95vw;
-            height: 90vh;
-            max-width: 1100px;
-            background: white;
-            border-radius: 40px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            border: 8px solid white;
-        }
-
-        header, footer {
-            height: 60px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            background: #c3b4c3;
-            color: var(--text-dark);
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        header { border-radius: 0 0 50% 50% / 0 0 100% 100%; }
-        footer { border-radius: 50% 50% 0 0 / 100% 100% 0 0; margin-top: auto; }
-
-        .brand-name { font-size: 1.5rem; color: var(--purple-main); }
-
-        main { flex: 1; position: relative; z-index: 10; overflow: hidden; }
-        
-        .frame {
-            display: none;
-            height: 100%;
-            padding: 20px 40px;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .frame.active { display: flex; animation: fadeIn 0.4s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .input-group { display: flex; gap: 20px; width: 100%; justify-content: center; }
-        textarea { width: 60%; height: 220px; border-radius: 15px; padding: 15px; border: 1px solid #ddd; outline: none; font-size: 1rem; }
-
-        .dashboard { display: grid; grid-template-columns: 240px 1fr; gap: 20px; width: 100%; height: 100%; text-align: left; }
-        .sidebar { background: #f8f8f8; border-radius: 20px; padding: 20px; border: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; }
-
-        .btn {
-            background: var(--purple-main);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .nav-item { padding: 12px; background: white; border-radius: 8px; cursor: pointer; border: 1px solid #eee; transition: 0.3s; }
-        .nav-item:hover { background: #f0f0f0; }
-        .nav-item.active { background: var(--purple-main); color: white; border-color: var(--purple-main); }
-
-        #output-screen { 
-            background: #fdfdfd; 
-            border-radius: 20px; 
-            border: 1px solid #eee; 
-            padding: 30px; 
-            overflow-y: auto; 
-            white-space: pre-wrap; /* Maintains AI text formatting */
-            line-height: 1.6;
-        }
-
-        /* Loading Spinner */
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--purple-main); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hidden { display: none; }
-    </style>
+    <title>Scriptoria | The Filmmaker's Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Courier+Prime:wght@400;700&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
 
-    <div class="app-container">
-        <header><span class="brand-name">Scriptoria</span></header>
+    <!-- Background Elements -->
+    <div class="noise-overlay"></div>
+    <div class="vignette"></div>
 
-        <main>
-            <section id="frame-1" class="frame active">
-                <div style="background: #f0f0f0; padding: 40px; border-radius: 20px; border: 2px dashed #ccc; margin-bottom: 20px;">
-                    <p>Welcome to Scriptoria Image Animation System</p>
-                </div>
-                <button class="btn" onclick="showFrame(2)">START PROJECT</button>
-            </section>
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-container">
 
-            <section id="frame-2" class="frame">
-                <h2 style="margin-bottom: 20px; color: var(--purple-main);">Film Concept</h2>
-                <div class="input-group">
-                    <textarea id="prompt" placeholder="Describe your cinematic vision in detail..."></textarea>
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                        <select id="timing" style="padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
-                            <option value="standard">Standard Timing</option>
-                            <option value="5">Starting Hook</option>
-                            <option value="10">Middle Development</option>
-                            <option value="15">Ending Climax</option>
+        <!-- VIEW 1: THE MARQUEE (Welcome) -->
+        <section id="view-welcome" class="view active">
+            <div class="marquee-content">
+                <h1 class="title-main">SCRIPTORIA</h1>
+                <p class="subtitle">Where Algorithms Meet Artistry</p>
+                <button class="btn-primary huge" onclick="navigateTo('view-input')">ENTER STUDIO</button>
+            </div>
+        </section>
+
+        <!-- VIEW 2: THE WRITERS' ROOM (Input) -->
+        <section id="view-input" class="view">
+            <header class="app-header">
+                <div class="logo-small" onclick="navigateTo('view-welcome')">SCRIPTORIA</div>
+                <div class="step-indicator">PHASE 1: CONCEPTUALIZATION</div>
+            </header>
+
+            <div class="workspace">
+                <!-- Left Panel: Specs -->
+                <aside class="specs-panel">
+                    <h3>TECHNICAL SPECS</h3>
+
+                    <div class="control-group">
+                        <label>GENRE</label>
+                        <select id="genre-select">
+                            <option value="Drama">Drama</option>
+                            <option value="Sci-Fi">Sci-Fi</option>
+                            <option value="Noir">Noir</option>
+                            <option value="Comedy">Comedy</option>
+                            <option value="Horror">Horror</option>
+                            <option value="Fantasy">Fantasy</option>
                         </select>
-                        <button class="btn" id="generate-btn" onclick="generateScript()">GENERATE SCRIPT</button>
                     </div>
-                </div>
-            </section>
 
-            <section id="frame-5" class="frame">
-                <div class="dashboard">
-                    <aside class="sidebar">
-                        <p style="font-size: 0.7rem; color: #999; margin-bottom: 10px;">PRODUCTION ASSETS</p>
-                        <div class="nav-item active" onclick="switchTab(this, 'start')">🎬 Start Part</div>
-                        <div class="nav-item" onclick="switchTab(this, 'middle')">📽️ Middle Part</div>
-                        <div class="nav-item" onclick="switchTab(this, 'end')">🎞️ End Part</div>
-                        <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
-                        <div class="nav-item" onclick="switchTab(this, 'characters')">👤 Character Profiles</div>
-                    </aside>
-                    <div id="output-screen">
+                    <div class="control-group">
+                        <label>SCENE COUNT</label>
+                        <select id="scene-count">
+                            <option value="1">Short (1 Scene)</option>
+                            <option value="3-5">Standard (3-5 Scenes)</option>
+                            <option value="5-10">Extended (5-10 Scenes)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>LANGUAGE</label>
+                        <select id="language-select">
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="Japanese">Japanese</option>
+                        </select>
+                    </div>
+                </aside>
+
+                <!-- Right Panel: Canvas -->
+                <main class="canvas-panel">
+                    <div class="input-wrapper">
+                        <textarea id="story-prompt"
+                            placeholder="Fade in: A lone detective stands in the rain..."></textarea>
+                        <div class="action-bar">
+                            <button id="generate-btn" class="btn-primary" onclick="handleGeneration()">
+                                <span class="btn-text">ACTION</span>
+                                <span class="loader hidden"></span>
+                            </button>
                         </div>
-                </div>
-            </section>
-        </main>
+                    </div>
+                </main>
+            </div>
+        </section>
 
-        <footer><span style="font-size: 0.8rem;">Scriptoria AI | Powered by Granite4</span></footer>
+        <!-- VIEW 3: THE SCREENING (Output) -->
+        <section id="view-output" class="view">
+            <header class="app-header">
+                <div class="logo-small" onclick="navigateTo('view-welcome')">SCRIPTORIA</div>
+                <div class="step-indicator">PHASE 2: PRODUCTION</div>
+                <button class="btn-secondary" onclick="navigateTo('view-input')">NEW DRAFT</button>
+            </header>
+
+            <div class="studio-layout">
+                <!-- Center: Screenplay -->
+                <main class="script-viewer">
+                    <div class="paper-sheet" id="screenplay-content">
+                        <!-- Content injected here -->
+                    </div>
+                </main>
+
+                <!-- Right: Asset Dock -->
+                <aside class="asset-dock">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('screenplay')">SCRIPT</button>
+                        <button class="tab-btn" onclick="switchTab('characters')">CAST</button>
+                        <button class="tab-btn" onclick="switchTab('sound')">SOUND</button>
+                    </div>
+
+                    <div id="dock-content" class="dock-content">
+                        <!-- Dynamic Content -->
+                    </div>
+
+                    <div class="controls-deck">
+                        <h4>PRODUCTION TOOLS</h4>
+                        <button class="btn-tool" onclick="generateMusic()">
+                            🎵 COMPOSER (Generate Score)
+                        </button>
+                        <button class="btn-tool" onclick="narrateScript()">
+                            🎙️ VO (Narrate)
+                        </button>
+                        <div class="download-group">
+                            <button class="btn-tool small" onclick="download('pdf')">📄 PDF</button>
+                            <button class="btn-tool small" onclick="download('docx')">📝 DOCX</button>
+                        </div>
+                        <div id="media-player-container"></div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
     </div>
 
-    <script>
-        // Store the AI response globally so we can switch tabs
-        let scriptData = {
-            start: "Waiting for AI...",
-            middle: "Waiting for AI...",
-            end: "Waiting for AI...",
-            characters: "Waiting for AI..."
-        };
-
-        function showFrame(id) {
-            document.querySelectorAll('.frame').forEach(f => f.classList.remove('active'));
-            document.getElementById('frame-' + id).classList.add('active');
-        }
-
-        async function generateScript() {
-            const promptInput = document.getElementById('prompt').value;
-            const btn = document.getElementById('generate-btn');
-            
-            if (!promptInput) return alert("Please enter a story concept.");
-
-            // UI Feedback
-            btn.innerHTML = '<span class="loader"></span> Generating...';
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: promptInput })
-                });
-
-                const data = await response.json();
-                
-                // Assuming the AI returns a JSON object with these 4 keys
-                // If the AI returns one big string, you would split it here
-                scriptData = data.output; 
-
-                showFrame(5);
-                // Set default tab view
-                switchTab(document.querySelector('.nav-item'), 'start');
-
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Connection to Granite4 failed. Make sure your FastAPI server is running.");
-            } finally {
-                btn.innerHTML = 'GENERATE SCRIPT';
-                btn.disabled = false;
-            }
-        }
-
-        function switchTab(element, tabName) {
-            // Update UI Active State
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            element.classList.add('active');
-
-            // Map data to display
-            const content = scriptData[tabName] || "No content generated for this section.";
-            
-            document.getElementById('output-screen').innerHTML = `
-                <h2 style="text-transform: capitalize; color: var(--purple-main); margin-bottom: 15px;">${tabName.replace('_', ' ')}</h2>
-                <div>${content}</div>
-            `;
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
+
 </html>
