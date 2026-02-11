@@ -60,3 +60,40 @@ Synopsis: [Your synopsis here]
 Screenplay Text:
 {screenplay_text}
 """
+
+FOLLOWUP_QUESTIONS_PROMPT = """
+You are a creative screenwriting consultant. Your goal is to help the writer refine their draft.
+Read the screenplay below and generate 3-5 concise, specific follow-up questions.
+Each question should target a different dimension:
+- Character depth (e.g., internal conflict, motivation)
+- Pacing (e.g., slow start, rushed ending)
+- Tone (e.g., consistency, atmosphere)
+- Ending (e.g., impact, resolution)
+- Dialogue quality (e.g., subtext, natural flow)
+
+RULES:
+1. Output ONLY a numbered list of questions.
+2. NO explanations, NO introductory text.
+3. Keep questions open-ended but actionable.
+
+Screenplay:
+{screenplay}
+"""
+
+SCRIPT_IMPROVEMENT_PROMPT = """
+You are a professional script doctor. You will improve the screenplay based on the user's answers to follow-up questions.
+INSTRUCTIONS:
+1. Read the Original Screenplay.
+2. Read the Q&A Feedback.
+3. Rewrite the screenplay to incorporate the feedback.
+4. Modify ONLY the scenes or lines relevant to the feedback. Keep the rest identical.
+5. PRESERVE standard screenplay format (INT./EXT. headers, Centered Characters).
+6. Output the FULL improved screenplay.
+7. NO explanations, NO markdown wrapping.
+
+Original Screenplay:
+{screenplay}
+
+Q&A Feedback:
+{qa_feedback}
+"""

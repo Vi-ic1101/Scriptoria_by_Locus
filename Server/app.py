@@ -306,5 +306,61 @@ def download_content(format_type):
     else:
         return jsonify({"error": "Invalid format requested"}), 400
 
+@app.route('/followup-questions', methods=['GET'])
+def get_followup_questions():
+    """Generates follow-up questions for the current script."""
+    content = session.get('generated_content')
+    if not content or not content.get('screenplay'):
+        return jsonify({"error": "No screenplay found. Please generate one first."}), 400
+
+    from ai.granite_client import generate_followup_questions
+    
+    try:
+        questions = generate_followup_questions(content['screenplay'])
+        # Store in session for validation later
+        session['followup_questions'] = questions
+        return jsonify({"questions": questions})
+    except Exception as e:
+        logger.error(f"Follow-up Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/improve-script', methods=['POST'])
+def improve_script_route():
+    """Improves the script based on user answers."""
+    data = request.json
+    answers = data.get('answers') # Expecting dict: {question_text: user_answer}
+    
+    if not answers:
+        return jsonify({"error": "No answers provided"}), 400
+        
+    content = session.get('generated_content')
+    if not content or not content.get('screenplay'):
+         return jsonify({"error": "Original screenplay missing."}), 400
+
+    from ai.granite_client import improve_screenplay
+    
+    try:
+        updated_screenplay = improve_screenplay(content['screenplay'], answers)
+        
+        if updated_screenplay:
+            # Update session
+            content['screenplay'] = clean_ai_response(updated_screenplay)
+            session['generated_content'] = content
+            
+            # Update shared version if exists (optional but good for consistency)
+            # This is tricky without share_id being passed, but for now we update session.
+            
+            return jsonify({
+                "screenplay": content['screenplay'],
+                "message": "Screenplay improved successfully!"
+            })
+        else:
+             return jsonify({"error": "AI failed to improve script"}), 500
+             
+    except Exception as e:
+        logger.error(f"Improvement Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

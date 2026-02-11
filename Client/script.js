@@ -149,6 +149,11 @@ async function pollForCompletion(jobId) {
                 renderOutput();
                 navigateTo('view-output');
                 stopPremiumLoading();
+
+                // Show Refine Button
+                const refineBtn = document.getElementById('refine-btn');
+                if (refineBtn) refineBtn.classList.remove('hidden');
+
             } else if (data.status === 'failed') {
                 // Failure
                 throw new Error(data.error || "Generation failed in background");
@@ -203,78 +208,56 @@ function generateShareLink() {
     });
 }
 
+/* RENDER OUTPUT TO PAPER SHEET */
+function renderOutput() {
+    // Default View: Screenplay
+    const paper = document.getElementById('screenplay-content');
+    const dock = document.getElementById('dock-content');
 
-/* DOCK TABS */
+    // Ensure Paper is visible, Dock is hidden primarily
+    paper.classList.remove('hidden');
+    dock.classList.add('hidden');
+
+    // Format Screenplay
+    if (generatedContent && generatedContent.screenplay) {
+        paper.innerHTML = formatScreenplay(generatedContent.screenplay);
+    } else {
+        paper.innerHTML = "<div class='watermark'>WAITING FOR INPUT...</div>";
+    }
+
+    // Reset Tabs
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.nav-btn[onclick*="screenplay"]').classList.add('active');
+}
+
+/* TAB SWITCHING (Filesystem Metaphor) */
 function switchTab(tabName) {
-    // 1. Update Buttons
-    document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('active');
-        // Check onclick attribute to match the tabName
-        if (b.getAttribute('onclick').includes(`'${tabName}'`)) {
-            b.classList.add('active');
+    const paper = document.getElementById('screenplay-content');
+    const dock = document.getElementById('dock-content');
+    const buttons = document.querySelectorAll('.nav-btn');
+
+    // Update Buttons
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('onclick').includes(tabName)) {
+            btn.classList.add('active');
         }
     });
 
-    const scriptViewer = document.getElementById('screenplay-content');
-    const dock = document.getElementById('dock-content');
-
-    // 2. Logic for Swapping Views
     if (tabName === 'screenplay') {
-        // STANDARD VIEW: Screenplay in Center, Synopsis in Dock
-        scriptViewer.innerHTML = `
-            <div style="text-align:center; font-family:var(--font-heading); font-size:1.5rem; color:var(--text-muted); margin-bottom:40px; border-bottom:1px solid #ddd; padding-bottom:20px;">SCREENPLAY</div>
-            ${generatedContent.screenplay || "No script generated."}
-        `;
-        scriptViewer.style.fontFamily = "var(--font-script)";
-        scriptViewer.style.fontSize = "1rem";
-        scriptViewer.style.whiteSpace = "pre-wrap";
-
-        // Format Synopsis: separating Logline and Synopsis
-        let rawSynopsis = generatedContent.synopsis || "No synopsis available.";
-        let formattedSynopsis = rawSynopsis;
-
-        // Check if both labels exist to format them nicely
-        if (rawSynopsis.includes("Logline:") && rawSynopsis.includes("Synopsis:")) {
-            formattedSynopsis = rawSynopsis
-                .replace("Logline:", "<strong style='color:var(--accent); display:block; margin-bottom:5px;'>LOGLINE</strong>")
-                .replace("Synopsis:", "<br><br><strong style='color:var(--accent); display:block; margin-bottom:5px;'>SYNOPSIS</strong>");
-        } else {
-            // Fallback for partial labels
-            formattedSynopsis = rawSynopsis
-                .replace(/Logline:/i, "<strong style='color:var(--accent); display:block; margin-bottom:5px;'>LOGLINE</strong>")
-                .replace(/Synopsis:/i, "<br><br><strong style='color:var(--accent); display:block; margin-bottom:5px;'>SYNOPSIS</strong>");
-        }
-
-        dock.innerHTML = `<h3>STORY FILES</h3><div style="font-size:0.95rem;">${formattedSynopsis}</div>`;
-        dock.style.fontFamily = "var(--font-body)";
-        dock.style.whiteSpace = "normal";
-
-    } else if (tabName === 'characters') {
-        // CAST VIEW: Cast in Center, Screenplay in Dock
-        scriptViewer.innerHTML = `
-            <div style="text-align:center; font-family:var(--font-heading); font-size:1.5rem; color:var(--accent); margin-bottom:40px; border-bottom:1px solid var(--accent); padding-bottom:20px;">CAST & CHARACTERS</div>
-            ${generatedContent.characters || "No characters generated."}
-        `;
-        scriptViewer.style.fontFamily = "var(--font-body)";
-        scriptViewer.style.fontSize = "1.1rem"; // Slightly larger for readability
-        scriptViewer.style.whiteSpace = "pre-wrap";
-
-        // Place Screenplay in Dock
-        dock.innerHTML = `<h3>SCREENPLAY (Reference)</h3><div style="font-size:0.85rem; font-family:var(--font-script); white-space:pre-wrap;">${generatedContent.screenplay || "No script."}</div>`;
-        dock.style.fontFamily = "var(--font-script)";
-
-    } else if (tabName === 'sound') {
-        // SOUND VIEW: Sound in Center, Screenplay in Dock
-        scriptViewer.innerHTML = `
-            <div style="text-align:center; font-family:var(--font-heading); font-size:1.5rem; color:var(--accent); margin-bottom:40px; border-bottom:1px solid var(--accent); padding-bottom:20px;">SOUND DESIGN</div>
-            ${generatedContent.sound_design || "No sound design generated."}
-        `;
-        scriptViewer.style.fontFamily = "var(--font-body)";
-        scriptViewer.style.fontSize = "1.1rem";
-        scriptViewer.style.whiteSpace = "pre-wrap";
-
-        dock.innerHTML = `<h3>SCREENPLAY (Reference)</h3><div style="font-size:0.85rem; font-family:var(--font-script); white-space:pre-wrap;">${generatedContent.screenplay || "No script."}</div>`;
-        dock.style.fontFamily = "var(--font-script)";
+        paper.classList.remove('hidden');
+        dock.classList.add('hidden');
+        if (generatedContent) paper.innerHTML = formatScreenplay(generatedContent.screenplay);
+    }
+    else if (tabName === 'characters') {
+        paper.classList.add('hidden');
+        dock.classList.remove('hidden');
+        dock.innerHTML = generatedContent ? formatCharacters(generatedContent.characters) : "No characters generated.";
+    }
+    else if (tabName === 'sound') {
+        paper.classList.add('hidden');
+        dock.classList.remove('hidden');
+        dock.innerHTML = generatedContent ? formatSound(generatedContent.sound_design) : "No sound design generated.";
     }
 }
 
@@ -338,6 +321,24 @@ function createCustomAudioPlayer(url, title = "Audio Track") {
     });
 
     return container;
+}
+
+/* HELPER FUNCTIONS */
+function formatScreenplay(text) {
+    if (!text) return "";
+    // Basic bolding for sluglines and character names
+    return text.replace(/^(INT\.|EXT\.)/gm, '<b>$1</b>')
+        .replace(/([A-Z]{3,}\s?\(V\.O\.\)|[A-Z]{3,})/g, '<b>$1</b>');
+}
+
+function formatCharacters(text) {
+    if (!text) return "";
+    return `<h3>CAST LIST</h3><div style="white-space: pre-wrap;">${text}</div>`;
+}
+
+function formatSound(text) {
+    if (!text) return "";
+    return `<h3>SOUND DESIGN</h3><div style="white-space: pre-wrap;">${text}</div>`;
 }
 
 /* TOOLS */
@@ -437,6 +438,109 @@ async function narrateScript() {
     } catch (e) {
         statusDiv.innerHTML = "❌ Narration failed.";
         console.error(e);
+    }
+}
+
+/* REFINEMENT FEATURE */
+async function startRefinement() {
+    const statusDiv = document.getElementById('questions-container');
+    const dock = document.getElementById('refinement-dock');
+    const btn = document.getElementById('refine-btn');
+    const applyBtn = document.getElementById('apply-fix-btn');
+
+    // Toggle Dock
+    dock.classList.remove('hidden');
+    btn.classList.add('hidden');
+
+    // Clear & Show Loading
+    statusDiv.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">🤔 Analyzing your script for improvements...</div>`;
+    applyBtn.style.display = 'none';
+
+    try {
+        const response = await fetch('/followup-questions');
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Render Questions
+        renderQuestions(data.questions);
+        applyBtn.style.display = 'block'; // Show apply button
+
+    } catch (e) {
+        console.error(e);
+        statusDiv.innerHTML = `<div style="color:red; font-size:0.8rem;">Could not load questions. Try again later.</div>`;
+        setTimeout(() => {
+            dock.classList.add('hidden');
+            btn.classList.remove('hidden');
+        }, 3000);
+    }
+}
+
+function renderQuestions(questions) {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+
+    questions.forEach((q, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = "15px";
+
+        wrapper.innerHTML = `
+            <div style="font-size:0.8rem; margin-bottom:5px; color:#ddd;">${q}</div>
+            <textarea id="answer-${index}" rows="2" placeholder="Your answer (optional)..." 
+                style="width:100%; background:#222; border:1px solid #444; color:#fff; padding:8px; font-family:var(--font-body); border-radius:4px; font-size:0.8rem;"></textarea>
+        `;
+        container.appendChild(wrapper);
+    });
+}
+
+async function submitRefinements() {
+    const container = document.getElementById('questions-container');
+    const inputs = container.querySelectorAll('textarea');
+    const answers = {};
+    let hasAnswers = false;
+
+    // Harvest Answers
+    inputs.forEach((input, index) => {
+        const questionText = input.previousElementSibling.innerText;
+        const answerText = input.value.trim();
+
+        if (answerText) {
+            answers[questionText] = answerText;
+            hasAnswers = true;
+        }
+    });
+
+    if (!hasAnswers) return alert("Please answer at least one question to improve the script.");
+
+    // Start Premium Loading (Custom Text)
+    startPremiumLoading("Applying Fixes...", "Polishing Dialogue...");
+
+    try {
+        const response = await fetch('/improve-script', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers })
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Success!
+        generatedContent.screenplay = data.screenplay;
+        renderOutput(); // Re-render script view
+
+        alert("Script improved successfully!");
+
+        // Reset UI
+        document.getElementById('refinement-dock').classList.add('hidden');
+        document.getElementById('refine-btn').classList.remove('hidden');
+
+    } catch (e) {
+        console.error(e);
+        alert("Improvement failed: " + e.message);
+    } finally {
+        stopPremiumLoading();
     }
 }
 

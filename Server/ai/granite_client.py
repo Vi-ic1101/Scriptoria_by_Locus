@@ -90,3 +90,40 @@ def generate_story_content(story_idea, genre="Drama", scene_count="3-5", languag
         results["meta"]["status"] = "partial_success"
 
     return results
+
+def generate_followup_questions(screenplay_text):
+    """
+    Generates 3-5 follow-up questions based on the screenplay.
+    """
+    from .prompts import FOLLOWUP_QUESTIONS_PROMPT
+    
+    logger.info("Generating Follow-up Questions...")
+    prompt = FOLLOWUP_QUESTIONS_PROMPT.format(screenplay=screenplay_text[:12000]) # Context limit
+    response = query_ollama(prompt)
+    
+    if not response:
+        return []
+    
+    # Simple parsing to get a list
+    questions = [line.strip() for line in response.split('\n') if line.strip() and (line[0].isdigit() or line.startswith('-'))]
+    return questions
+
+def improve_screenplay(original_screenplay, qa_pairs):
+    """
+    Rewrites the screenplay based on user feedback.
+    """
+    from .prompts import SCRIPT_IMPROVEMENT_PROMPT
+    
+    logger.info("Improving Screenplay...")
+    
+    # Format QA for the prompt
+    qa_text = "\n".join([f"Q: {q}\nA: {a}" for q, a in qa_pairs.items()])
+    
+    prompt = SCRIPT_IMPROVEMENT_PROMPT.format(
+        screenplay=original_screenplay[:12000], 
+        qa_feedback=qa_text
+    )
+    
+    improved_script = query_ollama(prompt)
+    return improved_script
+

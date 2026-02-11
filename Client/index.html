@@ -19,7 +19,7 @@
     <div class="noise-overlay"></div>
     <div class="vignette"></div>
 
-    <!-- PRELOADER / GENERATION OVERLAY -->
+    <!-- PRELOADER -->
     <div id="loading-overlay" class="hidden">
         <div class="loading-content">
             <h2 id="loading-status">INITIALIZING STUDIO...</h2>
@@ -30,10 +30,10 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
+    <!-- APP CONTAINER -->
     <div id="app-container">
 
-        <!-- VIEW 1: THE MARQUEE (Welcome) -->
+        <!-- VIEW 1: WELCOME (MARQUEE) -->
         <section id="view-welcome" class="view active">
             <div class="spotlight"></div>
             <div class="marquee-content">
@@ -43,7 +43,7 @@
             </div>
         </section>
 
-        <!-- VIEW 2: THE WRITERS' ROOM (Input) -->
+        <!-- VIEW 2: INPUT (WRITERS' ROOM) -->
         <section id="view-input" class="view">
             <header class="app-header">
                 <div class="logo-small" onclick="navigateTo('view-welcome')">DRAFTROOM</div>
@@ -51,10 +51,8 @@
             </header>
 
             <div class="workspace">
-                <!-- Left Panel: Specs -->
                 <aside class="specs-panel">
                     <h3>TECHNICAL SPECS</h3>
-
                     <div class="control-group">
                         <label>GENRE</label>
                         <select id="genre-select">
@@ -66,7 +64,6 @@
                             <option value="Fantasy">Fantasy</option>
                         </select>
                     </div>
-
                     <div class="control-group">
                         <label>SCENE COUNT</label>
                         <select id="scene-count">
@@ -75,7 +72,6 @@
                             <option value="5-10">Extended (5-10 Scenes)</option>
                         </select>
                     </div>
-
                     <div class="control-group">
                         <label>LANGUAGE</label>
                         <select id="language-select">
@@ -88,7 +84,6 @@
                     </div>
                 </aside>
 
-                <!-- Right Panel: Canvas -->
                 <main class="canvas-panel">
                     <div class="input-wrapper">
                         <textarea id="story-prompt"
@@ -104,51 +99,79 @@
             </div>
         </section>
 
-        <!-- VIEW 3: THE SCREENING (Output) -->
+        <!-- VIEW 3: OUTPUT (STUDIO MODE) -->
         <section id="view-output" class="view">
-            <header class="app-header">
-                <div class="logo-small" onclick="navigateTo('view-welcome')">DRAFTROOM</div>
-                <div class="step-indicator">PHASE 2: PRODUCTION</div>
-                <button class="btn-secondary" onclick="navigateTo('view-input')">NEW DRAFT</button>
-            </header>
 
-            <div class="studio-layout">
-                <!-- Center: Screenplay -->
-                <main class="script-viewer">
-                    <div class="paper-sheet" id="screenplay-content">
+            <div class="studio-grid">
+
+                <!-- COLUMN 1: NAVIGATION -->
+                <aside class="studio-sidebar">
+                    <div class="logo-area" onclick="navigateTo('view-welcome')">DRAFTROOM</div>
+
+                    <nav class="nav-menu">
+                        <button class="nav-btn active" onclick="switchTab('screenplay')">
+                            <span class="icon">📜</span> SYNOPSIS
+                        </button>
+                        <button class="nav-btn" onclick="switchTab('characters')">
+                            <span class="icon">👥</span> CAST
+                        </button>
+                        <button class="nav-btn" onclick="switchTab('sound')">
+                            <span class="icon">🔊</span> SOUND
+                        </button>
+                    </nav>
+
+                    <div class="sidebar-footer">
+                        <button class="btn-secondary small" onclick="navigateTo('view-input')">NEW DRAFT</button>
+                    </div>
+                </aside>
+
+                <!-- COLUMN 2: MAIN STAGE -->
+                <main class="studio-stage">
+                    <div id="screenplay-content" class="paper-sheet">
                         <!-- Content injected here -->
                     </div>
+                    <!-- Dynamic Dock Content (Synopsis/Cast/Sound) -->
+                    <div id="dock-content" class="dock-content hidden"></div>
                 </main>
 
-                <!-- Right: Asset Dock -->
-                <aside class="asset-dock">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="switchTab('screenplay')">Synopsis</button>
-                        <button class="tab-btn" onclick="switchTab('characters')">CAST</button>
-                        <button class="tab-btn" onclick="switchTab('sound')">SOUND</button>
-                    </div>
+                <!-- COLUMN 3: INSPECTOR -->
+                <aside class="studio-inspector">
 
-                    <div id="dock-content" class="dock-content">
-                        <!-- Dynamic Content -->
-                    </div>
-
-                    <div class="controls-deck">
-                        <h4>PRODUCTION TOOLS</h4>
-                        <button class="btn-tool" onclick="generateMusic()">
-                            🎵 COMPOSER (Generate Score)
-                        </button>
-                        <button class="btn-tool" onclick="narrateScript()">
-                            🎙️ VO (Narrate)
-                        </button>
-                        <div class="download-group">
+                    <!-- SECTION A: EXPORT -->
+                    <div class="inspector-section">
+                        <h3>DISTRIBUTION</h3>
+                        <div class="button-grid">
                             <button class="btn-tool small" onclick="download('pdf')">📄 PDF</button>
                             <button class="btn-tool small" onclick="download('docx')">📝 DOCX</button>
                             <button class="btn-tool small" onclick="generateShareLink()">🔗 LINK</button>
                         </div>
-                        <div id="media-player-container"></div>
+                    </div>
+
+                    <!-- SECTION B: REFINEMENT (Script Doctor) -->
+                    <div class="inspector-section flex-grow">
+                        <h3>SCRIPT DOCTOR</h3>
+                        <button id="refine-btn" class="btn-tool highlight" onclick="startRefinement()">
+                            ✨ IMPROVE SCRIPT
+                        </button>
+
+                        <div id="refinement-dock" class="hidden">
+                            <div id="questions-container"></div>
+                            <button id="apply-fix-btn" class="btn-primary small full-width"
+                                onclick="submitRefinements()">APPLY FIXES</button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION C: PRODUCTION (Media) -->
+                    <div class="inspector-section">
+                        <h3>PRODUCTION</h3>
+                        <button class="btn-tool" onclick="generateMusic()">🎵 GENERATE SCORE</button>
+                        <button class="btn-tool" onclick="narrateScript()">🎙️ GENERATE VO</button>
+
                         <div id="media-player-container"></div>
                     </div>
+
                 </aside>
+
             </div>
         </section>
 
